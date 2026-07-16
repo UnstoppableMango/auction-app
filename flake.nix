@@ -27,9 +27,14 @@
         {
           devShells.default = pkgs.mkShellNoCC {
             packages = with pkgs; [
+              fnm
               gnumake
               nixfmt
             ];
+
+            shellHook = ''
+              eval "$(fnm env --use-on-cd)"
+            '';
           };
 
           treefmt.programs = {
