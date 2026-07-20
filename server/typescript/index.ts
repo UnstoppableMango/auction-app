@@ -1,9 +1,9 @@
+import cors from "cors";
 import { randomUUID } from "crypto";
+import express, { type Request, type Response } from "express";
 import { readFileSync } from "fs";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
-import cors from "cors";
-import express, { type Request, type Response } from "express";
 
 const PORT = 3001;
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -45,6 +45,10 @@ const listings: Listing[] = JSON.parse(
 	readFileSync(join(__dirname, "data", "listings.json"), "utf-8"),
 );
 
+const history: Record<string, BidRequest[]> = Object.fromEntries(
+	listings.map(l => [l.id, []])
+);
+
 // ============================================================
 // App
 // ============================================================
@@ -55,9 +59,38 @@ app.use(cors({ origin: "http://localhost:5173" }));
 app.use(express.json());
 
 // GET /api/listings
-app.get("/api/listings", (_req: Request, res: Response) => {
-	res.json(listings);
+app.get("/api/listings", (req: Request, res: Response) => {
+	const page = parseInt(req.query.page as string ?? '0');
+	const size = parseInt(req.query.size as string ?? '10');
+
+	res.json({
+		page,
+		size,
+		items: filterListings(page, size, req.query.filter as string),
+		total: listings.length,
+	});
 });
+
+function filterListings(page: number, size: number, filter?: string): Listing[] {
+	const start = page * size;
+	const items = listings.slice(start, start + size);
+
+	if (!filter) {
+		return items;
+	}
+
+	// In lieu of a more robust fuzzy search...
+	return items.filter(x => {
+		// For all keys whose values are strings, return
+		// true when the key's value contains the filter
+		for (const [_, v] of Object.entries(x)) {
+			if (typeof v === 'string' && v.includes(filter)) {
+				return true
+			}
+		}
+		return false;
+	});
+}
 
 // POST /api/listings
 app.post("/api/listings", (req: Request, res: Response) => {
@@ -81,6 +114,8 @@ app.post("/api/listings", (req: Request, res: Response) => {
 	};
 
 	listings.push(listing);
+	history[listing.id] = [];
+
 	return res.status(201).json(listing);
 });
 
@@ -122,7 +157,7 @@ app.post("/api/listings/:id/bids", (req: Request, res: Response) => {
 			.json({ error: "Bid amount must be a positive number" });
 	}
 
-	if (bid.amount >= listing.currentBid) {
+	if (bid.amount <= listing.currentBid) {
 		return res.status(400).json({
 			error: `Bid must be greater than the current bid of $${listing.currentBid.toLocaleString()}`,
 		});
@@ -130,8 +165,17 @@ app.post("/api/listings/:id/bids", (req: Request, res: Response) => {
 
 	listing.currentBid = bid.amount;
 	listing.currentBidder = bid.bidder.trim();
+	history[listing.id].push(bid);
 
 	return res.status(201).json(listing);
+});
+
+app.get("/api/listings/:id/bids", (req: Request, res: Response) => {
+	const bids = history[req.params.id];
+	if (!bids) {
+		return res.status(404).json({ error: "Listing not found" });
+	}
+	return res.status(200).json(bids);
 });
 
 app.listen(PORT, () => {
