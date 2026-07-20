@@ -24,9 +24,11 @@ function timeRemaining(endsAt: string, status: string): string {
 
 export default function ListingCard({ listing, isSelected, onClick }: Props) {
 	const closed = listing.status === "closed";
-	const [remaning, setRemaining] = useState(timeRemaining(listing.endsAt, listing.status))
+	const [remaning, setRemaining] = useState(() => timeRemaining(listing.endsAt, listing.status))
 
 	useEffect(() => {
+		setRemaining(timeRemaining(listing.endsAt, listing.status))
+
 		const interval = setInterval(() => {
 			setRemaining(timeRemaining(listing.endsAt, listing.status))
 		}, 1_000);

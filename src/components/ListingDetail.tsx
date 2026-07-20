@@ -19,26 +19,35 @@ function formatDate(iso: string): string {
 }
 
 function timeRemaining(endsAt: string): number {
-	return new Date(endsAt).getTime() - Date.now();
+	return Math.max(0, new Date(endsAt).getTime() - Date.now());
 }
 
 function formatRemaining(time: number): string {
-	const d = new Date(time);
-	const hours = d.getHours();
-	if (hours >= 24) {
-		return `${hours / 24} Days`;
+	if (time <= 0) {
+		return 'Ended';
 	}
-	if (hours > 1) {
+
+	const totalSeconds = Math.floor(time / 1000);
+	const hours = Math.floor(totalSeconds / 3600);
+	if (hours >= 24) {
+		return `${Math.floor(hours / 24)} Days`;
+	}
+	if (hours >= 1) {
 		return `${hours} Hours`;
 	}
-	return `${d.getSeconds()} Seconds`;
+
+	const minutes = Math.floor((totalSeconds % 3600) / 60);
+	const seconds = totalSeconds % 60;
+	return `${minutes} Minutes ${seconds} Seconds`;
 }
 
 export default function ListingDetail({ listing, onBidSuccess }: Props) {
 	const [history, setHistory] = useState<BidRequest[]>([]);
-	const [remaining, setRemaining] = useState(timeRemaining(listing.endsAt));
+	const [remaining, setRemaining] = useState(() => timeRemaining(listing.endsAt));
 
 	useEffect(() => {
+		setRemaining(timeRemaining(listing.endsAt));
+
 		const interval = setInterval(() => {
 			setRemaining(timeRemaining(listing.endsAt))
 		}, 1_000);
