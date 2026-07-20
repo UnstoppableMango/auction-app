@@ -15,7 +15,8 @@ export default function BidForm({ listing, onBidSuccess }: Props) {
 		e.preventDefault();
 		setError(null);
 
-		const data = new FormData(e.currentTarget);
+		const currentTarget = e.currentTarget;
+		const data = new FormData(currentTarget);
 		const bidder = (data.get("bidder") as string).trim();
 		const numAmount = parseFloat(data.get("amount") as string);
 
@@ -32,7 +33,7 @@ export default function BidForm({ listing, onBidSuccess }: Props) {
 		try {
 			const updated = await placeBid(listing.id, bidder, numAmount);
 			onBidSuccess(updated);
-			e.currentTarget.reset();
+			currentTarget.reset();
 		} catch (err) {
 			setError(err instanceof Error ? err.message : "Failed to place bid");
 		} finally {
