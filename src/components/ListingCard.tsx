@@ -32,7 +32,7 @@ export default function ListingCard({ listing, isSelected, onClick }: Props) {
 		}, 1_000);
 
 		return () => clearInterval(interval);
-	}, []);
+	}, [listing.endsAt, listing.status]);
 
 	return (
 		<div

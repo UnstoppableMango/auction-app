@@ -18,14 +18,40 @@ function formatDate(iso: string): string {
 	});
 }
 
+function timeRemaining(endsAt: string): number {
+	return new Date(endsAt).getTime() - Date.now();
+}
+
+function formatRemaining(time: number): string {
+	const d = new Date(time);
+	const hours = d.getHours();
+	if (hours >= 24) {
+		return `${hours / 24} Days`;
+	}
+	if (hours > 1) {
+		return `${hours} Hours`;
+	}
+	return `${d.getSeconds()} Seconds`;
+}
+
 export default function ListingDetail({ listing, onBidSuccess }: Props) {
 	const [history, setHistory] = useState<BidRequest[]>([]);
+	const [remaining, setRemaining] = useState(timeRemaining(listing.endsAt));
 
+	useEffect(() => {
+		const interval = setInterval(() => {
+			setRemaining(timeRemaining(listing.endsAt))
+		}, 1_000);
+
+		return () => clearInterval(interval);
+	}, [listing.endsAt]);
+
+	// Dependency on currentBid so that history is re-fetched when bids change
 	useEffect(() => {
 		getBids(listing.id)
 			.then(setHistory)
 			.catch(err => err instanceof Error ? err.message : "Failed to fetch bids")
-	}, [listing.id]);
+	}, [listing.id, listing.currentBid]);
 
 	return (
 		<div className="listing-detail">
@@ -68,14 +94,17 @@ export default function ListingDetail({ listing, onBidSuccess }: Props) {
 					<span className="meta-label">Auction Ends</span>
 					<span className="meta-value">{formatDate(listing.endsAt)}</span>
 				</div>
+				<div className="meta-row">
+					<span className="meta-label">Time Remaining</span>
+					<span className="meta-value">{formatRemaining(remaining)}</span>
+				</div>
 			</div>
 
 			{/* Visible regardless of active status; i.e. displays history after bidding has ended */}
-			<ul>
+			<ul className="listing-detail__history">
 				{history.map((bid, i) => (
 					<li key={i}>
-						<span>{bid.bidder}</span>
-						<span>{bid.amount}</span>
+						<strong>{bid.bidder}</strong>: <span>${bid.amount.toLocaleString()}</span>
 					</li>
 				))}
 			</ul>
