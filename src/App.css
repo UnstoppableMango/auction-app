@@ -73,6 +73,13 @@ body {
 	background: #fafafa;
 }
 
+.panel__action-row {
+	display: flex;
+	justify-content: space-between;
+	gap: 10px;
+	padding: 5px;
+}
+
 .panel__heading-row {
 	display: flex;
 	align-items: center;

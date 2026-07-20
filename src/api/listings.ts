@@ -1,7 +1,24 @@
 import type { BidRequest, Listing } from "../types";
 
-export async function getListings(): Promise<Listing[]> {
-	const res = await fetch("/api/listings");
+interface ListingRequest {
+	page?: number;
+	size?: number;
+}
+
+interface ListingResponse {
+	items: Listing[];
+	page: number;
+	size: number;
+	total: number;
+}
+
+export async function getListings(req: ListingRequest = {}): Promise<ListingResponse> {
+	const params = new URLSearchParams({
+		page: String(req.page ?? 0),
+		size: String(req.size ?? 10),
+	});
+
+	const res = await fetch("/api/listings?" + params.toString());
 	if (!res.ok) throw new Error("Failed to fetch listings");
 	return res.json();
 }

@@ -59,8 +59,17 @@ app.use(cors({ origin: "http://localhost:5173" }));
 app.use(express.json());
 
 // GET /api/listings
-app.get("/api/listings", (_req: Request, res: Response) => {
-	res.json(listings);
+app.get("/api/listings", (req: Request, res: Response) => {
+	const page = parseInt(req.query.page as string ?? '0');
+	const size = parseInt(req.query.size as string ?? '10');
+	const start = page * size;
+
+	res.json({
+		page,
+		size,
+		items: listings.slice(start, start + size),
+		total: listings.length,
+	});
 });
 
 // POST /api/listings
