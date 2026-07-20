@@ -11,11 +11,12 @@ export default function App() {
 	const [showCreateForm, setShowCreateForm] = useState(false);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
+	const [filter, setFilter] = useState('');
 	const [pageSize, setPageSize] = useState('10');
 	const [page, setPage] = useState('0');
 
 	useEffect(() => {
-		getListings({ page: parseInt(page), size: parseInt(pageSize) })
+		getListings({ page: parseInt(page), size: parseInt(pageSize), filter })
 			.then((data) => setListings(data.items))
 			.catch((err) =>
 				setError(
@@ -23,7 +24,7 @@ export default function App() {
 				),
 			)
 			.finally(() => setLoading(false));
-	}, [page, pageSize]);
+	}, [page, pageSize, filter]);
 
 	const selectedListing = listings.find((l) => l.id === selectedId) ?? null;
 
@@ -60,7 +61,7 @@ export default function App() {
 					</div>
 
 					<div className="panel__action-row">
-						<input id="filter" type="text" placeholder="Filter e.g. John Deere" />
+						<input id="filter" type="text" placeholder="Filter e.g. John Deere" value={filter} onChange={e => setFilter(e.target.value)} />
 
 						<div>
 							<label htmlFor="page-size">Page Size</label>

@@ -3,6 +3,7 @@ import type { BidRequest, Listing } from "../types";
 interface ListingRequest {
 	page?: number;
 	size?: number;
+	filter?: string;
 }
 
 interface ListingResponse {
@@ -17,6 +18,10 @@ export async function getListings(req: ListingRequest = {}): Promise<ListingResp
 		page: String(req.page ?? 0),
 		size: String(req.size ?? 10),
 	});
+
+	if (req.filter) {
+		params.set('filter', encodeURIComponent(req.filter))
+	}
 
 	const res = await fetch("/api/listings?" + params.toString());
 	if (!res.ok) throw new Error("Failed to fetch listings");

@@ -62,15 +62,35 @@ app.use(express.json());
 app.get("/api/listings", (req: Request, res: Response) => {
 	const page = parseInt(req.query.page as string ?? '0');
 	const size = parseInt(req.query.size as string ?? '10');
-	const start = page * size;
 
 	res.json({
 		page,
 		size,
-		items: listings.slice(start, start + size),
+		items: filterListings(page, size, req.query.filter as string),
 		total: listings.length,
 	});
 });
+
+function filterListings(page: number, size: number, filter?: string): Listing[] {
+	const start = page * size;
+	const items = listings.slice(start, start + size);
+
+	if (!filter) {
+		return items;
+	}
+
+	// In lieu of a more robust fuzzy search...
+	return items.filter(x => {
+		// For all keys whose values are strings, return
+		// true when the key's value contains the filter
+		for (const [_, v] of Object.entries(x)) {
+			if (typeof v === 'string' && v.includes(filter)) {
+				return true
+			}
+		}
+		return false;
+	});
+}
 
 // POST /api/listings
 app.post("/api/listings", (req: Request, res: Response) => {
