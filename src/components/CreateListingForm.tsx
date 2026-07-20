@@ -14,7 +14,8 @@ export default function CreateListingForm({ onSuccess }: Props) {
 		e.preventDefault();
 		setError(null);
 
-		const data = new FormData(e.currentTarget);
+		const currentTarget = e.currentTarget;
+		const data = new FormData(currentTarget);
 		const title = (data.get("title") as string).trim();
 
 		if (!title) {
@@ -26,7 +27,7 @@ export default function CreateListingForm({ onSuccess }: Props) {
 		try {
 			const listing = await createListing({ title });
 			onSuccess(listing);
-			e.currentTarget.reset();
+			currentTarget.reset();
 		} catch (err) {
 			setError(err instanceof Error ? err.message : "Failed to create listing");
 		} finally {
