@@ -11,6 +11,7 @@ interface ListingResponse {
 	page: number;
 	size: number;
 	total: number;
+	// TODO: bool for more?
 }
 
 export async function getListings(req: ListingRequest = {}): Promise<ListingResponse> {
