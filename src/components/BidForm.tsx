@@ -66,11 +66,7 @@ export default function BidForm({ listing, onBidSuccess }: Props) {
 					disabled={submitting}
 				/>
 			</div>
-			<button
-				type="submit"
-				className="bid-form__submit"
-				disabled={submitting}
-			>
+			<button type="submit" className="bid-form__submit" disabled={submitting}>
 				{submitting ? "Submitting…" : "Submit Bid"}
 			</button>
 		</form>

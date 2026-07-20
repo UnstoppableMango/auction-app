@@ -1,9 +1,9 @@
+import cors from "cors";
 import { randomUUID } from "crypto";
+import express, { type Request, type Response } from "express";
 import { readFileSync } from "fs";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
-import cors from "cors";
-import express, { type Request, type Response } from "express";
 
 const PORT = 3001;
 const __dirname = dirname(fileURLToPath(import.meta.url));

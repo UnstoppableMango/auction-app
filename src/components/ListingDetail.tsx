@@ -1,5 +1,5 @@
-import BidForm from "./BidForm";
 import type { Listing } from "../types";
+import BidForm from "./BidForm";
 
 interface Props {
 	listing: Listing;
