@@ -14,14 +14,16 @@ interface ListingResponse {
 	// TODO: bool for more?
 }
 
-export async function getListings(req: ListingRequest = {}): Promise<ListingResponse> {
+export async function getListings(
+	req: ListingRequest = {},
+): Promise<ListingResponse> {
 	const params = new URLSearchParams({
 		page: String(req.page ?? 0),
 		size: String(req.size ?? 10),
 	});
 
 	if (req.filter) {
-		params.set('filter', encodeURIComponent(req.filter))
+		params.set("filter", req.filter);
 	}
 
 	const res = await fetch("/api/listings?" + params.toString());

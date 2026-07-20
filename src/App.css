@@ -296,7 +296,7 @@ body {
 }
 
 /* Could be much prettier */
-.listing-detail__history>li {
+.listing-detail__history > li {
 	padding: 5px;
 }
 

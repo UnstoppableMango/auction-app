@@ -37,6 +37,10 @@ interface CreateListingRequest {
 	title: string;
 }
 
+interface Bid extends BidRequest {
+	timestamp: string;
+}
+
 // ============================================================
 // In-memory store — seeded from data/listings.json
 // ============================================================
@@ -45,8 +49,8 @@ const listings: Listing[] = JSON.parse(
 	readFileSync(join(__dirname, "data", "listings.json"), "utf-8"),
 );
 
-const history: Record<string, BidRequest[]> = Object.fromEntries(
-	listings.map(l => [l.id, []])
+const history: Record<string, Bid[]> = Object.fromEntries(
+	listings.map((l) => [l.id, []]),
 );
 
 // ============================================================
@@ -60,36 +64,36 @@ app.use(express.json());
 
 // GET /api/listings
 app.get("/api/listings", (req: Request, res: Response) => {
-	const page = parseInt(req.query.page as string ?? '0');
-	const size = parseInt(req.query.size as string ?? '10');
+	const page = parseInt((req.query.page as string) ?? "0");
+	const size = parseInt((req.query.size as string) ?? "10");
+	const filter = req.query.filter as string;
+	const items = filterListings(page, size, filter);
 
-	res.json({
-		page,
-		size,
-		items: filterListings(page, size, req.query.filter as string),
-		total: listings.length,
-	});
+	res.json({ page, size, items, total: items.length });
 });
 
-function filterListings(page: number, size: number, filter?: string): Listing[] {
-	const start = page * size;
-	const items = listings.slice(start, start + size);
+function filterListings(
+	page: number,
+	size: number,
+	filter?: string,
+): Listing[] {
+	let items = listings.slice();
 
-	if (!filter) {
-		return items;
+	if (filter) {
+		items = items.filter((x) => {
+			// For all keys whose values are strings, return
+			// true when the key's value contains the filter
+			for (const [_, v] of Object.entries(x)) {
+				if (typeof v === "string" && v.includes(filter)) {
+					return true;
+				}
+			}
+			return false;
+		});
 	}
 
-	// In lieu of a more robust fuzzy search...
-	return items.filter(x => {
-		// For all keys whose values are strings, return
-		// true when the key's value contains the filter
-		for (const [_, v] of Object.entries(x)) {
-			if (typeof v === 'string' && v.includes(filter)) {
-				return true
-			}
-		}
-		return false;
-	});
+	const start = page * size;
+	return items.slice(start, start + size);
 }
 
 // POST /api/listings
@@ -165,7 +169,10 @@ app.post("/api/listings/:id/bids", (req: Request, res: Response) => {
 
 	listing.currentBid = bid.amount;
 	listing.currentBidder = bid.bidder.trim();
-	history[listing.id].push(bid);
+	history[listing.id].push({
+		...bid,
+		timestamp: new Date().toLocaleDateString(),
+	});
 
 	return res.status(201).json(listing);
 });
@@ -175,7 +182,7 @@ app.get("/api/listings/:id/bids", (req: Request, res: Response) => {
 	if (!bids) {
 		return res.status(404).json({ error: "Listing not found" });
 	}
-	return res.status(200).json(bids);
+	return res.status(200).json(bids.slice().reverse());
 });
 
 app.listen(PORT, () => {

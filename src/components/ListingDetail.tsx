@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
+import { getBids } from "../api/listings";
 import type { BidRequest, Listing } from "../types";
 import BidForm from "./BidForm";
-import { getBids } from "../api/listings";
 
 interface Props {
 	listing: Listing;
@@ -24,7 +24,7 @@ function timeRemaining(endsAt: string): number {
 
 function formatRemaining(time: number): string {
 	if (time <= 0) {
-		return 'Ended';
+		return "Ended";
 	}
 
 	const totalSeconds = Math.floor(time / 1000);
@@ -43,13 +43,15 @@ function formatRemaining(time: number): string {
 
 export default function ListingDetail({ listing, onBidSuccess }: Props) {
 	const [history, setHistory] = useState<BidRequest[]>([]);
-	const [remaining, setRemaining] = useState(() => timeRemaining(listing.endsAt));
+	const [remaining, setRemaining] = useState(() =>
+		timeRemaining(listing.endsAt),
+	);
 
 	useEffect(() => {
 		setRemaining(timeRemaining(listing.endsAt));
 
 		const interval = setInterval(() => {
-			setRemaining(timeRemaining(listing.endsAt))
+			setRemaining(timeRemaining(listing.endsAt));
 		}, 1_000);
 
 		return () => clearInterval(interval);
@@ -59,7 +61,10 @@ export default function ListingDetail({ listing, onBidSuccess }: Props) {
 	useEffect(() => {
 		getBids(listing.id)
 			.then(setHistory)
-			.catch(err => err instanceof Error ? err.message : "Failed to fetch bids")
+			.catch((err) => {
+				console.error(err);
+				setHistory([]);
+			});
 	}, [listing.id, listing.currentBid]);
 
 	return (
@@ -111,9 +116,10 @@ export default function ListingDetail({ listing, onBidSuccess }: Props) {
 
 			{/* Visible regardless of active status; i.e. displays history after bidding has ended */}
 			<ul className="listing-detail__history">
-				{history.map((bid, i) => (
-					<li key={i}>
-						<strong>{bid.bidder}</strong>: <span>${bid.amount.toLocaleString()}</span>
+				{history.map((bid) => (
+					<li key={bid.timestamp + bid.bidder}>
+						<strong>{bid.bidder}</strong>:{" "}
+						<span>${bid.amount.toLocaleString()}</span>
 					</li>
 				))}
 			</ul>

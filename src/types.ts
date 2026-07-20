@@ -14,4 +14,5 @@ export interface Listing {
 export interface BidRequest {
 	bidder: string;
 	amount: number;
+	timestamp: string;
 }

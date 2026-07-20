@@ -23,14 +23,19 @@ function timeRemaining(endsAt: string, status: string): string {
 }
 
 export default function ListingCard({ listing, isSelected, onClick }: Props) {
-	const closed = listing.status === "closed";
-	const [remaning, setRemaining] = useState(() => timeRemaining(listing.endsAt, listing.status))
+	const closed =
+		listing.status === "closed" ||
+		new Date(listing.endsAt).getTime() <= Date.now();
+
+	const [remaining, setRemaining] = useState(() =>
+		timeRemaining(listing.endsAt, listing.status),
+	);
 
 	useEffect(() => {
-		setRemaining(timeRemaining(listing.endsAt, listing.status))
+		setRemaining(timeRemaining(listing.endsAt, listing.status));
 
 		const interval = setInterval(() => {
-			setRemaining(timeRemaining(listing.endsAt, listing.status))
+			setRemaining(timeRemaining(listing.endsAt, listing.status));
 		}, 1_000);
 
 		return () => clearInterval(interval);
@@ -60,7 +65,7 @@ export default function ListingCard({ listing, isSelected, onClick }: Props) {
 				<div
 					className={`listing-card__time ${closed ? "listing-card__time--ended" : ""}`}
 				>
-					{remaning}
+					{remaining}
 				</div>
 			</div>
 		</div>
