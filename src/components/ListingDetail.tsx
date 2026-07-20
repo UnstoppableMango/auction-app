@@ -1,5 +1,7 @@
-import type { Listing } from "../types";
+import { useEffect, useState } from "react";
+import type { BidRequest, Listing } from "../types";
 import BidForm from "./BidForm";
+import { getBids } from "../api/listings";
 
 interface Props {
 	listing: Listing;
@@ -17,6 +19,14 @@ function formatDate(iso: string): string {
 }
 
 export default function ListingDetail({ listing, onBidSuccess }: Props) {
+	const [history, setHistory] = useState<BidRequest[]>([]);
+
+	useEffect(() => {
+		getBids(listing.id)
+			.then(setHistory)
+			.catch(err => err instanceof Error ? err.message : "Failed to fetch bids")
+	}, [listing.id]);
+
 	return (
 		<div className="listing-detail">
 			<img
@@ -59,6 +69,16 @@ export default function ListingDetail({ listing, onBidSuccess }: Props) {
 					<span className="meta-value">{formatDate(listing.endsAt)}</span>
 				</div>
 			</div>
+
+			{/* Visible regardless of active status; i.e. displays history after bidding has ended */}
+			<ul>
+				{history.map((bid, i) => (
+					<li key={i}>
+						<span>{bid.bidder}</span>
+						<span>{bid.amount}</span>
+					</li>
+				))}
+			</ul>
 
 			{listing.status === "active" && (
 				<BidForm listing={listing} onBidSuccess={onBidSuccess} />

@@ -1,4 +1,4 @@
-import type { Listing } from "../types";
+import type { BidRequest, Listing } from "../types";
 
 export async function getListings(): Promise<Listing[]> {
 	const res = await fetch("/api/listings");
@@ -38,6 +38,15 @@ export async function placeBid(
 	if (!res.ok) {
 		const data = await res.json().catch(() => ({}));
 		throw new Error(data.error || data.detail || "Failed to place bid");
+	}
+	return res.json();
+}
+
+export async function getBids(listingId: string): Promise<BidRequest[]> {
+	const res = await fetch(`/api/listings/${listingId}/bids`);
+	if (!res.ok) {
+		const data = await res.json().catch(() => ({}));
+		throw new Error(data.error || data.detail || "Failed to fetch bids");
 	}
 	return res.json();
 }

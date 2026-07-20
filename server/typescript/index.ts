@@ -45,6 +45,10 @@ const listings: Listing[] = JSON.parse(
 	readFileSync(join(__dirname, "data", "listings.json"), "utf-8"),
 );
 
+const history: Record<string, BidRequest[]> = Object.fromEntries(
+	listings.map(l => [l.id, []])
+);
+
 // ============================================================
 // App
 // ============================================================
@@ -81,6 +85,8 @@ app.post("/api/listings", (req: Request, res: Response) => {
 	};
 
 	listings.push(listing);
+	history[listing.id] = [];
+
 	return res.status(201).json(listing);
 });
 
@@ -130,8 +136,17 @@ app.post("/api/listings/:id/bids", (req: Request, res: Response) => {
 
 	listing.currentBid = bid.amount;
 	listing.currentBidder = bid.bidder.trim();
+	history[listing.id].push(bid);
 
 	return res.status(201).json(listing);
+});
+
+app.get("/api/listings/:id/bids", (req: Request, res: Response) => {
+	const bids = history[req.params.id];
+	if (!bids) {
+		return res.status(404).json({ error: "Listing not found" });
+	}
+	return res.status(200).json(bids);
 });
 
 app.listen(PORT, () => {
