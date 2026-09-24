@@ -11,17 +11,20 @@ export default function App() {
 	const [showCreateForm, setShowCreateForm] = useState(false);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
+	const [filter, setFilter] = useState('');
+	const [pageSize, setPageSize] = useState('10');
+	const [page, setPage] = useState('0');
 
 	useEffect(() => {
-		getListings()
-			.then((data) => setListings(data))
+		getListings({ page: parseInt(page), size: parseInt(pageSize), filter })
+			.then((data) => setListings(data.items))
 			.catch((err) =>
 				setError(
 					err instanceof Error ? err.message : "Failed to load listings",
 				),
 			)
 			.finally(() => setLoading(false));
-	}, []);
+	}, [page, pageSize, filter]);
 
 	const selectedListing = listings.find((l) => l.id === selectedId) ?? null;
 
@@ -56,6 +59,21 @@ export default function App() {
 							+ New
 						</button>
 					</div>
+
+					<div className="panel__action-row">
+						<input id="filter" type="text" placeholder="Filter e.g. John Deere" value={filter} onChange={e => setFilter(e.target.value)} />
+
+						<div>
+							<label htmlFor="page-size">Page Size</label>
+							<input id="page-size" type="number" value={pageSize} onChange={e => setPageSize(e.target.value)} />
+						</div>
+
+						<div>
+							<label htmlFor="page">Page</label>
+							<input id="page" type="number" value={page} onChange={e => setPage(e.target.value)} />
+						</div>
+					</div>
+
 					{loading && <div className="state-message">Loading listings…</div>}
 					{error && (
 						<div className="state-message state-message--error">{error}</div>

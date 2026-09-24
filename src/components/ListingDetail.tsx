@@ -1,5 +1,7 @@
+import { useEffect, useState } from "react";
+import type { BidRequest, Listing } from "../types";
 import BidForm from "./BidForm";
-import type { Listing } from "../types";
+import { getBids } from "../api/listings";
 
 interface Props {
 	listing: Listing;
@@ -16,7 +18,50 @@ function formatDate(iso: string): string {
 	});
 }
 
+function timeRemaining(endsAt: string): number {
+	return Math.max(0, new Date(endsAt).getTime() - Date.now());
+}
+
+function formatRemaining(time: number): string {
+	if (time <= 0) {
+		return 'Ended';
+	}
+
+	const totalSeconds = Math.floor(time / 1000);
+	const hours = Math.floor(totalSeconds / 3600);
+	if (hours >= 24) {
+		return `${Math.floor(hours / 24)} Days`;
+	}
+	if (hours >= 1) {
+		return `${hours} Hours`;
+	}
+
+	const minutes = Math.floor((totalSeconds % 3600) / 60);
+	const seconds = totalSeconds % 60;
+	return `${minutes} Minutes ${seconds} Seconds`;
+}
+
 export default function ListingDetail({ listing, onBidSuccess }: Props) {
+	const [history, setHistory] = useState<BidRequest[]>([]);
+	const [remaining, setRemaining] = useState(() => timeRemaining(listing.endsAt));
+
+	useEffect(() => {
+		setRemaining(timeRemaining(listing.endsAt));
+
+		const interval = setInterval(() => {
+			setRemaining(timeRemaining(listing.endsAt))
+		}, 1_000);
+
+		return () => clearInterval(interval);
+	}, [listing.endsAt]);
+
+	// Dependency on currentBid so that history is re-fetched when bids change
+	useEffect(() => {
+		getBids(listing.id)
+			.then(setHistory)
+			.catch(err => err instanceof Error ? err.message : "Failed to fetch bids")
+	}, [listing.id, listing.currentBid]);
+
 	return (
 		<div className="listing-detail">
 			<img
@@ -58,7 +103,20 @@ export default function ListingDetail({ listing, onBidSuccess }: Props) {
 					<span className="meta-label">Auction Ends</span>
 					<span className="meta-value">{formatDate(listing.endsAt)}</span>
 				</div>
+				<div className="meta-row">
+					<span className="meta-label">Time Remaining</span>
+					<span className="meta-value">{formatRemaining(remaining)}</span>
+				</div>
 			</div>
+
+			{/* Visible regardless of active status; i.e. displays history after bidding has ended */}
+			<ul className="listing-detail__history">
+				{history.map((bid, i) => (
+					<li key={i}>
+						<strong>{bid.bidder}</strong>: <span>${bid.amount.toLocaleString()}</span>
+					</li>
+				))}
+			</ul>
 
 			{listing.status === "active" && (
 				<BidForm listing={listing} onBidSuccess={onBidSuccess} />

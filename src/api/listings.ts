@@ -1,7 +1,30 @@
-import type { Listing } from "../types";
+import type { BidRequest, Listing } from "../types";
 
-export async function getListings(): Promise<Listing[]> {
-	const res = await fetch("/api/listings");
+interface ListingRequest {
+	page?: number;
+	size?: number;
+	filter?: string;
+}
+
+interface ListingResponse {
+	items: Listing[];
+	page: number;
+	size: number;
+	total: number;
+	// TODO: bool for more?
+}
+
+export async function getListings(req: ListingRequest = {}): Promise<ListingResponse> {
+	const params = new URLSearchParams({
+		page: String(req.page ?? 0),
+		size: String(req.size ?? 10),
+	});
+
+	if (req.filter) {
+		params.set('filter', encodeURIComponent(req.filter))
+	}
+
+	const res = await fetch("/api/listings?" + params.toString());
 	if (!res.ok) throw new Error("Failed to fetch listings");
 	return res.json();
 }
@@ -38,6 +61,15 @@ export async function placeBid(
 	if (!res.ok) {
 		const data = await res.json().catch(() => ({}));
 		throw new Error(data.error || data.detail || "Failed to place bid");
+	}
+	return res.json();
+}
+
+export async function getBids(listingId: string): Promise<BidRequest[]> {
+	const res = await fetch(`/api/listings/${listingId}/bids`);
+	if (!res.ok) {
+		const data = await res.json().catch(() => ({}));
+		throw new Error(data.error || data.detail || "Failed to fetch bids");
 	}
 	return res.json();
 }
