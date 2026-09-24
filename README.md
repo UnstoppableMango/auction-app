@@ -1,5 +1,7 @@
 # auction-app
 
+[![Hercules CI](https://hercules-ci.com/api/v1/site/github/account/UnstoppableMango/project/auction-app/badge)](https://hercules-ci.com/github/UnstoppableMango/auction-app)
+
 This repo contains a simple auction application for demonstrating technical ability.
 
 ## Reviewers
